@@ -1,0 +1,183 @@
+Program.Sub.ScreenSU.Start
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+v.Global.iRefresh_Rate.Declare
+V.Global.sMonitor.Declare
+V.Global.sMenu.Declare
+Program.External.Include.Library("GCG_5993_Check_Create_Folder.lib")
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'This project will create trueview web pages that is similar with the screen: On Line System > View > Current Work in Progress (No Dollars)
+'User will maintain the selection in this script: Department + Employee Group (Employee_MSTR.Pr_Balance_Group) + Shift + DisplayNotClockedIn
+'The Maintenance program will be run from On Line System > Administration > Maintenance - Current WO in Progress Trueview - 5993
+'The TrueView one time open will be run from On Line System > View > TrueView - Current WO in Progress (No Dollars) - 5993
+f.Intrinsic.Control.Try
+	v.Local.sError.Declare
+	v.Local.sRet.Declare
+	v.Local.iSleep.Declare
+	v.Local.sNow.Declare
+	v.Local.iMinuteUnload.Declare
+	v.Local.sStandAlone.Declare
+	v.Local.iPIDReturn.Declare
+	V.Local.iStopTime.Declare
+	v.Local.bNum.Declare
+	V.Local.sSql.Declare
+	V.Local.sSwitch.Declare
+	V.Local.iC.Declare
+	
+	f.Intrinsic.Control.CallSub("checkTable")
+	f.Intrinsic.Control.CallSub("Check_and_Create_Custom_Folder")
+	
+	F.Intrinsic.String.Split(V.Caller.Switches,"||",V.Local.sRet)
+	V.Local.sRet.RedimPreserve(0,1)
+	V.Global.sMonitor.Set(V.Local.sRet(0).Trim)
+	V.Global.sMenu.Set(V.Local.sRet(1).Trim)
+	
+	F.Intrinsic.Control.If(V.Caller.Switches.Trim,<>,"")
+		'Loop based on the iSleep time. Condition to stop: if past 11pm, then unload, or if switch = 'O' (run once from a custom menu item setup with switch 'O') then unload.
+		F.Intrinsic.Control.Do
+			f.ODBC.Connection!conx.OpenCompanyConnection(1000)
+			'Get Refresh Time or set default refresh time to 300
+			F.Intrinsic.String.Build("Select Monitor, Monitor_Note, RefreshTime, StopTime, DisplayNotClockedIn From GCG_5993_Selection Where Monitor = '{0}'",V.Global.sMonitor,v.Local.sSql)
+			f.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql,v.Local.sRet)
+			F.ODBC.Connection!Conx.Close
+			F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+			f.Intrinsic.Control.If(v.Local.sRet(2).Trim,=,"")
+				v.Global.iRefresh_Rate.Set(300000)
+			f.Intrinsic.Control.Else
+				f.Intrinsic.Math.Mult(v.Local.sRet(2),1000,v.Global.iRefresh_Rate)
+			f.Intrinsic.Control.EndIf
+		
+			'Check the time and see if it is past 11:57 pm for Carwil as they work around the clock. The maintenance will be reloaded at 12:00 am
+			f.Intrinsic.String.Format(v.Ambient.Now,"HHMMSS",v.Local.sNow)
+			v.Local.iMinuteUnload.Set(v.Local.sNow.left4)
+			
+			'Get Stop time
+			f.Intrinsic.Control.If(v.Local.sRet(3).Trim,<>,"")
+				'Check stop time numeric
+				f.Intrinsic.Math.IsNumeric(v.Local.sRet(3),v.Local.bNum)			
+				f.Intrinsic.Control.If(v.Local.bNum)				
+					v.Local.iStopTime.Set(v.Local.sRet(3))
+					f.Intrinsic.Control.If(v.Local.iStopTime,>,2350,or,v.Local.iStopTime,<,10)
+						v.Local.iStopTime.Set(2345)
+					f.Intrinsic.Control.EndIf	
+				f.Intrinsic.Control.Else
+					'set default as 2345
+					v.Local.iStopTime.Set(2345)
+				f.Intrinsic.Control.EndIf			
+	
+			f.Intrinsic.Control.Else
+				'Blank stoptime 
+				v.Local.iStopTime.Set(2345)
+			f.Intrinsic.Control.EndIf
+			
+			'Check to stop or not
+			f.Intrinsic.Control.If(v.Local.iMinuteUnload,>=,2345)
+				f.Intrinsic.Control.CallSub("Unload")			
+			F.Intrinsic.Control.Else
+				'Call Alone programe to generate HTML. We have to call another script to run then unload for each instance of web page. In the past, we have the GCG_5891_generate_HTML.g2u took care of the processing, but some customers has issue of culmulating RAM, it seemed the datatable was closed but it was not actually disposed, so caused the memory leak.
+				f.Intrinsic.String.Build("{0}\GCG_5993_Alone.g2u",v.Caller.GasDir,v.Local.sStandAlone)
+				F.Intrinsic.String.Build("{0}||{1}||{2}||{3}",V.Global.sMonitor,V.Local.sRet(1).Trim,V.Global.iRefresh_Rate,V.Global.sMenu,V.Local.sSwitch)
+				function.Global.General.CallAsyncGAS(v.Local.sStandAlone,V.Local.sSwitch,-1,v.Local.iPIDReturn)	
+				'This is to run once if lauched from a custom menu item with switch 'O'
+				F.Intrinsic.Control.If(V.Global.sMenu,=,"Y")
+					f.Intrinsic.Control.CallSub("Unload")
+				F.Intrinsic.Control.EndIf				
+				f.Intrinsic.Math.Div(v.Global.iRefresh_Rate,1000,v.Local.iSleep)		
+				F.Intrinsic.UI.Sleep(v.Local.iSleep)			
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.Loop
+	F.Intrinsic.Control.Else
+		'Loop based on the iSleep time. Condition to stop: if past 11pm, then unload, or if switch = 'O' (run once from a custom menu item setup with switch 'O') then unload.
+		F.Intrinsic.Control.Do
+			f.ODBC.Connection!conx.OpenCompanyConnection(1000)
+			'Get Refresh Time or set default refresh time to 300
+			F.Intrinsic.Control.If(V.DataTable.Monitor.Exists)
+				F.Data.DataTable.Close("Monitor")
+			F.Intrinsic.Control.EndIf
+			V.Local.sSql.Set("Select Monitor From GCG_5993_Selection")
+			F.Data.DataTable.CreateFromSQL("Monitor","conx",V.Local.sSql,True)
+			F.Intrinsic.Control.For(V.Local.iC,0,V.DataTable.Monitor.RowCount--,1)
+				V.Global.sMonitor.Set(V.DataTable.Monitor(V.Local.iC).Monitor!FieldValTrim)
+				F.Intrinsic.String.Build("Select Monitor, Monitor_Note, RefreshTime, StopTime, DisplayNotClockedIn From GCG_5993_Selection Where Monitor = '{0}'",V.Global.sMonitor,v.Local.sSql)
+				f.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql,v.Local.sRet)
+				F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+				f.Intrinsic.Control.If(v.Local.sRet(2).Trim,=,"")
+					v.Global.iRefresh_Rate.Set(300000)
+				f.Intrinsic.Control.Else
+					f.Intrinsic.Math.Mult(v.Local.sRet(2),1000,v.Global.iRefresh_Rate)
+				f.Intrinsic.Control.EndIf
+			
+				'Check the time and see if it is past 11:57 pm for Carwil as they work around the clock. The maintenance will be reloaded at 12:00 am
+				f.Intrinsic.String.Format(v.Ambient.Now,"HHMMSS",v.Local.sNow)
+				v.Local.iMinuteUnload.Set(v.Local.sNow.left4)
+				
+				'Get Stop time
+				f.Intrinsic.Control.If(v.Local.sRet(3).Trim,<>,"")
+					'Check stop time numeric
+					f.Intrinsic.Math.IsNumeric(v.Local.sRet(3),v.Local.bNum)			
+					f.Intrinsic.Control.If(v.Local.bNum)				
+						v.Local.iStopTime.Set(v.Local.sRet(3))
+						f.Intrinsic.Control.If(v.Local.iStopTime,>,2350,or,v.Local.iStopTime,<,10)
+							v.Local.iStopTime.Set(2345)
+						f.Intrinsic.Control.EndIf	
+					f.Intrinsic.Control.Else
+						'set default as 2345
+						v.Local.iStopTime.Set(2345)
+					f.Intrinsic.Control.EndIf			
+		
+				f.Intrinsic.Control.Else
+					'Blank stoptime 
+					v.Local.iStopTime.Set(2345)
+				f.Intrinsic.Control.EndIf
+				
+				'Check to stop or not
+				f.Intrinsic.Control.If(v.Local.iMinuteUnload,>=,2345)
+					f.Intrinsic.Control.CallSub("Unload")			
+				F.Intrinsic.Control.Else
+					'Call Alone programe to generate HTML. We have to call another script to run then unload for each instance of web page. In the past, we have the GCG_5891_generate_HTML.g2u took care of the processing, but some customers has issue of culmulating RAM, it seemed the datatable was closed but it was not actually disposed, so caused the memory leak.
+					f.Intrinsic.String.Build("{0}\GCG_5993_Alone.g2u",v.Caller.GasDir,v.Local.sStandAlone)
+					F.Intrinsic.String.Build("{0}||{1}||{2}||{3}",V.Global.sMonitor,V.Local.sRet(1).Trim,V.Global.iRefresh_Rate,V.Global.sMenu,V.Local.sSwitch)
+					function.Global.General.CallAsyncGAS(v.Local.sStandAlone,V.Local.sSwitch,-1,v.Local.iPIDReturn)	
+					'This is to run once if lauched from a custom menu item with switch 'O'
+					F.Intrinsic.Control.If(V.Global.sMenu,=,"Y")
+						f.Intrinsic.Control.CallSub("Unload")
+					F.Intrinsic.Control.EndIf						
+				F.Intrinsic.Control.EndIf
+			F.Intrinsic.Control.Next(V.Local.iC)
+			F.ODBC.Connection!Conx.Close
+			f.Intrinsic.Math.Div(v.Global.iRefresh_Rate,1000,v.Local.iSleep)		
+			F.Intrinsic.UI.Sleep(v.Local.iSleep)	
+		F.Intrinsic.Control.Loop
+	F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}GAB Version: {5}}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)	
+	f.Intrinsic.Control.CallSub("Unload")
+F.Intrinsic.Control.EndTry
+Program.Sub.Main.End
+
+Program.Sub.Unload.Start
+f.Intrinsic.Control.Try
+	V.Local.sError.Declare
+	
+	f.Intrinsic.Control.If(v.ODBC.conx.State,=,1)
+		F.ODBC.Connection!conX.close
+	f.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.End
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}GAB Version: {5}}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	f.Intrinsic.Control.End
+F.Intrinsic.Control.EndTry
+Program.Sub.Unload.End
+
+Program.Sub.Comments.Start
+${$5$}$3.0.0.0$}$0
+${$6$}$bnguyen$}$20200212154645728$}$tqzwddZCkmoVRWHEL6DZymEEseDhOdziCzRbrpTX9LVjuB0e85y3g72xVbQW03Y9M/FYB8T2FGc=
+Program.Sub.Comments.End
