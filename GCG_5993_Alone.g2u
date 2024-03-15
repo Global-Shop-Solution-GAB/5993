@@ -1,0 +1,481 @@
+Program.Sub.ScreenSU.Start
+Gui.Form..Create
+Gui.Form..Size(15360,10695)
+Gui.Form..MinX(0)
+Gui.Form..MinY(0)
+Gui.Form..Position(0,0)
+Gui.Form..BackColor(-2147483633)
+Gui.Form..MousePointer(0)
+Gui.Form..Event(UnLoad,Form_UnLoad)
+Gui.Form.gsGrid.Create(GsGridControl)
+Gui.Form.gsGrid.Size(14670,9705)
+Gui.Form.gsGrid.Position(255,225)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+v.Global.iRefresh_Rate.Declare
+V.Global.sMonitor.Declare
+V.Global.sMenu.Declare
+V.Global.sTitle.Declare
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+f.Intrinsic.Control.Try
+	v.Local.sError.Declare
+	v.Local.sRet.Declare
+
+	f.ODBC.Connection!conx.OpenCompanyConnection(1000)
+	
+	f.Intrinsic.UI.InvokeWaitDialog("Processing Trueview(s) 5993...")
+	F.Intrinsic.String.Split(V.Caller.Switches,"||",V.Local.sRet)
+	F.Intrinsic.Control.If(V.Local.sRet.UBound,=,3)
+		v.Global.iRefresh_Rate.Set(V.Local.sRet(2))
+		V.Global.sMonitor.Set(V.Local.sRet(0).Trim)
+		V.Global.sTitle.Set(V.Local.sRet(1).Trim)
+		V.Global.sMenu.Set(V.Local.sRet(3))
+		F.Intrinsic.Control.CallSub("Load")
+		f.Intrinsic.UI.CloseWaitDialog
+		f.Intrinsic.Control.CallSub("Unload")
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Control.End
+	F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}GAB Version: {5}}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)	
+	f.Intrinsic.Control.CallSub("Unload")
+F.Intrinsic.Control.EndTry
+Program.Sub.Main.End
+
+Program.Sub.Unload.Start
+f.Intrinsic.Control.Try
+	V.Local.sError.Declare
+	
+	f.Intrinsic.Control.If(v.ODBC.conx.State,=,1)
+		F.ODBC.Connection!conX.close
+	f.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.End
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}GAB Version: {5}}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	f.Intrinsic.Control.End
+F.Intrinsic.Control.EndTry
+Program.Sub.Unload.End
+
+Program.Sub.Load.Start
+f.Intrinsic.Control.Try
+	v.Local..BulkDeclareString(sError,sSQL,sRet,sHold,sDir,sTime,sHours,sFilter,sDeptFilter,sGroupFilter,sShiftFilter,sMonitor_Note,sTimeRem)
+	v.local..BulkDeclareLong(iCnt,iSecs)
+	v.Local.bEx.Declare
+	v.Local..BulkDeclareDate(dDate,dTime)
+	v.Local.fHours.Declare
+	
+	'Check maintenance table
+	f.Intrinsic.Control.If(v.DataTable.Maint.Exists)
+		f.Data.DataTable.Close("Maint")
+	f.Intrinsic.Control.EndIf
+	F.Intrinsic.String.Build("Select Monitor, Monitor_Note, RefreshTime, StopTime, Threshold, DisplayNotClockedIn From GCG_5993_Selection Where Monitor = '{0}'",V.Global.sMonitor,V.Local.sSql)
+	f.Data.DataTable.CreateFromSQL("Maint","conx",V.Local.sSql,True)
+	f.Intrinsic.Control.If(v.DataTable.Maint.RowCount,=,0)
+		f.Intrinsic.Control.CallSub("Unload")
+	f.Intrinsic.Control.EndIf
+	
+'	F.Intrinsic.String.Build("Select rtrim(Bal_Group) From GCG_5993_BalGroup Where Monitor = '{0}' and Selection = 1",V.Global.sMonitor,V.Local.sSql)
+'	f.Data.DataTable.CreateFromSQL("BalGroup","conx",V.Local.sSql,True)
+'	F.Data.DataView.Create("BalGroup","VBalGroup")
+'	F.Data.DataView.ToString("BalGroup","VBalGroup",V.Ambient.NewLine,"','",V.Local.sGroupFilter)
+'	F.Data.DataView.Close("BalGroup","VBalGroup")
+'	F.Data.DataTable.Close("BalGroup")
+'	
+	F.Intrinsic.String.Build("Select rtrim(Dept) From GCG_5993_DEPT Where Monitor = '{0}' and Selection = 1",V.Global.sMonitor,V.Local.sSql)
+	f.Data.DataTable.CreateFromSQL("Dept","conx",V.Local.sSql,True)
+	F.Data.DataView.Create("Dept","VDept")
+	F.Data.DataView.ToString("Dept","VDept",V.Ambient.NewLine,"','",V.Local.sDeptFilter)
+	F.Data.DataView.Close("Dept","VDept")
+	F.Data.DataTable.Close("Dept")
+	
+	F.Intrinsic.String.Build("Select rtrim(Shift) From GCG_5993_Shift Where Monitor = '{0}' and Selection = 1",V.Global.sMonitor,V.Local.sSql)
+	f.Data.DataTable.CreateFromSQL("Shift","conx",V.Local.sSql,True)
+	F.Data.DataView.Create("Shift","VShift")
+	F.Data.DataView.ToString("Shift","VShift",V.Ambient.NewLine,"','",V.Local.sShiftFilter)
+	F.Data.DataView.Close("Shift","VShift")
+	F.Data.DataTable.Close("Shift")
+	
+'	F.Intrinsic.Control.If(V.Local.sGroupFilter,<>,"")
+'		F.Intrinsic.String.Build("Pr_Balance_Group IN('{0}')",V.Local.sGroupFilter,V.Local.sFilter)
+'	F.Intrinsic.Control.EndIf
+	
+'	F.Intrinsic.Control.If(V.Local.sDeptFilter,<>,"")
+		F.Intrinsic.Control.If(v.Local.sFilter,<>,"")
+			F.Intrinsic.String.Build("{0} AND Dept_Employee IN ('{1}')",V.Local.sFilter,V.Local.sDeptFilter,v.Local.sFilter)
+		F.Intrinsic.Control.Else
+			F.Intrinsic.String.Build("Dept_Employee IN ('{0}')",V.Local.sDeptFilter,V.Local.sFilter)
+		F.Intrinsic.Control.EndIf
+'	F.Intrinsic.Control.EndIf
+	
+'	F.Intrinsic.Control.If(V.Local.sShiftFilter,<>,"")
+		F.Intrinsic.Control.If(v.Local.sFilter,<>,"")
+			F.Intrinsic.String.Build("{0} AND Shift IN ('{1}')",V.Local.sFilter,V.Local.sShiftFilter,v.Local.sFilter)
+		F.Intrinsic.Control.Else
+			F.Intrinsic.String.Build("Shift IN ('{0}')",V.Local.sShiftFilter,V.Local.sFilter)
+		F.Intrinsic.Control.EndIf
+'	F.Intrinsic.Control.EndIf
+
+	f.Intrinsic.Control.If(v.DataTable.Maint(V.DataTable.Maint.RowCount--).DisplayNotClockedIn!FieldValTrim,=,"No")
+		f.Intrinsic.Control.If(v.Local.sFilter,<>,"")
+			f.Intrinsic.String.Build("{0} and Description <> 'Not Clocked In'",v.Local.sFilter,v.Local.sFilter)
+		f.Intrinsic.Control.Else
+			v.Local.sFilter.Set("Description <> 'Not Clocked In'")
+		f.Intrinsic.Control.EndIf
+	f.Intrinsic.Control.EndIf	
+		
+	f.Intrinsic.Control.If(v.DataTable.O.Exists)
+		f.Data.DataTable.Close("O")
+	f.Intrinsic.Control.EndIf
+	f.Data.DataTable.CreateFromSQL("O","conx","Select '' as Status, isNull(jp.Indirect,'') as Indirect,e.Employee,e.Name as EmployeeName,jp.Job,jp.Suffix,jp.Seq, jp.WorkCenter as WC, '' as PartNumber,'' as PartDescription,Case when IsNull(ta.Clocked_In,'') = '' Then 'Not Clocked In' When IsNull(ta.Clocked_In,'') = 'Y' and IsNull(jp.Job,'') = '' Then 'CLOCKED IN' When IsNull(ta.Clocked_In,'') = 'Y' and IsNull(jp.Job,'') <> '' Then jp.Job_Desc End as Description,Case when jp.Start_Date <> '1900-01-01' Then Convert(jp.Start_Date,SQL_CHAR) When jp.Start_Date = '1900-01-01' and ta.Date_In = '1900-01-01' Then '' When jp.Start_Date = '1900-01-01' and ta.Date_In <> '1900-01-01' then Convert(ta.Date_In,SQL_CHAR) End as ClockedIn,Case when jp.Start_Date <> '1900-01-01' Then Convert(jp.Start_Time,SQL_CHAR) When jp.Start_Date = '1900-01-01' and ta.Date_In = '1900-01-01' Then '' When jp.Start_Date = '1900-01-01' and ta.Date_In <> '1900-01-01' then Convert(ta.Time_In,SQL_CHAR) End as Since,Convert(0,SQL_Float) as HoursCompleted,Convert(0,SQL_Float) as ManHours,Convert(0,SQL_Float) as EstimatedHours,Convert(0,SQL_Integer) as Min_Remaining,ltrim(rtrim(e.Dept_Employee)) as Dept_Employee,ltrim(rtrim(e.Pr_Balance_Group)) as Pr_Balance_Group,IsNull(ta.Clocked_In,'') as ClockedInFlag,jp.Job + '-' + jp.Suffix as JobSuffix,jp.Job + '-' + jp.Suffix + '-' + jp.Seq as JobSuffixSeq,rtrim(e.Shift) as Shift from V_Employee_MSTR e left join (Select Employee,Date_In,Time_in,Clocked_In from v_Time_Attendance where Clocked_In = 'Y') ta on e.Employee = ta.Employee left join v_Jobs_In_Process_G jp on jp.Employee = ta.Employee and  jp.WAJ_Date = ta.Date_In where e.Date_Termination = '1900-01-01' ORDER BY e.EMPLOYEE",True)
+	
+	'Delete suspended rows
+	f.Data.DataTable.Select("O","Description = 'suspended'",v.Local.sHold)
+	f.Intrinsic.Control.If(v.Local.sHold,<>,"***NORETURN***")
+		f.Intrinsic.String.Split(v.Local.sHold,"*!*",v.Local.sHold)
+		F.Intrinsic.Control.For(v.Local.iCnt,v.local.shold.UBound,0,-1)
+			f.Data.DataTable.DeleteRow("O",v.Local.sHold(v.Local.iCnt))
+		F.Intrinsic.Control.Next(v.Local.iCnt)
+		f.Data.DataTable.AcceptChanges("O")
+	f.Intrinsic.Control.EndIf
+	
+	'Get Part number, PartDescription
+	f.Data.DataTable.CreateFromSQL("PartDescr","conx","Select Job + '-' + Suffix as JobSuffix, Part,Description from V_Job_Header",True)
+	f.Data.Dictionary.CreateFromDatatable("PartDict","PartDescr","JobSuffix","Part")
+	f.Data.Dictionary.SetDefaultReturn("PartDict","")
+	f.Data.DataTable.FillFromDictionary("O","PartDict","JobSuffix","PartNumber")
+	f.Data.Dictionary.Close("PartDict")
+	f.Data.Dictionary.CreateFromDatatable("DescrDict","PartDescr","JobSuffix","Description")
+	f.Data.Dictionary.SetDefaultReturn("DescrDict","")
+	f.Data.DataTable.FillFromDictionary("O","DescrDict","JobSuffix","PartDescription")
+	f.Data.Dictionary.Close("DescrDict")
+	f.Data.DataTable.Close("PartDescr")
+	
+	'Get Hours Completed,Estimated Hours
+	f.Data.DataTable.CreateFromSQL("Hours","conx","Select Job + '-' + Suffix + '-' + Seq as JobSuffixSeq, Hours_Actual, Hours_Estimated, Convert(((Hours_Estimated * 60)-(Hours_Actual * 60)),SQL_Integer) as Min_Remaining from V_Job_Operations",True)
+	'Hours Completed
+	f.Data.Dictionary.CreateFromDataTable("HoursCompletedDict","Hours","JobSuffixSeq","Hours_Actual")
+	f.Data.Dictionary.SetDefaultReturn("HoursCompletedDict",0)
+	f.Data.DataTable.FillFromDictionary("O","HoursCompletedDict","JobSuffixSeq","HoursCompleted")
+	f.Data.Dictionary.Close("HoursCompletedDict")
+	'Estimated Hours
+	f.Data.Dictionary.CreateFromDataTable("EstimatedHoursDict","Hours","JobSuffixSeq","Hours_Estimated")
+	f.Data.Dictionary.SetDefaultReturn("EstimatedHoursDict",0)
+	f.Data.DataTable.FillFromDictionary("O","EstimatedHoursDict","JobSuffixSeq","EstimatedHours")
+	'Remaining Mins
+	f.Data.Dictionary.CreateFromDataTable("RemainingHoursDict","Hours","JobSuffixSeq","Min_Remaining")
+	f.Data.Dictionary.SetDefaultReturn("RemainingHoursDict",0)
+	f.Data.DataTable.FillFromDictionary("O","RemainingHoursDict","JobSuffixSeq","Min_Remaining")
+	f.Data.Dictionary.Close("RemainingHoursDict")
+	'Close source for dicts
+	f.Data.DataTable.Close("Hours")
+	
+	'Calculate Man Hours = time since logged in
+	'"Description <> 'CLOCKED IN' and Description <> 'Not Clocked In'"
+	f.Data.DataView.Create("O","ODV",22,"Description <> 'CLOCKED IN' and Description <> 'Not Clocked In'","")
+	f.Intrinsic.Control.For(v.Local.iCnt,0,v.DataView.O!ODV.RowCount--,1)
+		v.Local.dDate.Set(v.DataView.O!ODV(v.Local.iCnt).ClockedIn!FieldValString)
+		f.Intrinsic.String.Build("{0} {1}",v.DataView.O!ODV(v.Local.iCnt).ClockedIn!FieldValString,Variable.DataView.O!ODV(v.Local.iCnt).Since!FieldVal,v.Local.sTime)
+		f.Intrinsic.Date.TimeComp(v.Local.sTime,v.Local.dTime)
+		F.Intrinsic.Date.CombineDateTime(v.local.dDate,v.Local.dTime,V.local.dDate)	
+		F.Intrinsic.Date.DateDiff("S",v.Local.dDate,v.Ambient.Now,v.Local.iSecs)
+		F.Intrinsic.Math.Div(V.Local.iSecs,60,V.Local.sTimeRem.Long)
+		f.Intrinsic.Math.Div(v.Local.iSecs,3600,v.Local.fHours)
+		F.Intrinsic.Math.Sub(V.DataView.O!ODV(V.Local.iCnt).Min_Remaining!FieldValFloat,V.Local.sTimeRem.Long,V.Local.sTimeRem.Long)
+		f.Intrinsic.String.Format(v.Local.fHours,"#,###,##0.0000",v.Local.sHours)
+		f.Data.DataView.SetValue("O","ODV",v.Local.iCnt,"ManHours",v.Local.sHours,"Min_Remaining",V.Local.sTimeRem.Long)
+	f.Intrinsic.Control.Next(v.Local.iCnt)
+	'Add column TotalHours and PctHoursCompleted
+	f.Data.DataTable.AddExpressionColumn("O","TotalHours","float","HoursCompleted + ManHours")
+	f.Data.DataTable.AddExpressionColumn("O","PctHoursCompleted","float","IIF(EstimatedHours <> 0,100 * TotalHours / EstimatedHours,0)")
+	
+	F.Data.DataView.SetFilter("O","ODV",V.Local.sFilter)
+	
+	f.Intrinsic.Math.Div(v.Global.iRefresh_Rate,1000,v.Local.sHold)
+	F.Intrinsic.String.Replace(V.Local.sDeptFilter,"','",",",V.Local.sDeptFilter)
+'	F.Intrinsic.String.Replace(V.Local.sGroupFilter,"','",",",V.Local.sGroupFilter)
+	F.Intrinsic.String.Replace(V.Local.sShiftFilter,"','",",",V.Local.sShiftFilter)
+	f.Intrinsic.Control.CallSub("Generate_HTML","sDept",v.Local.sDeptFilter,"sGroup",v.Local.sGroupFilter,"sShift",v.Local.sShiftFilter,"sDisplayNotClockedIn",v.DataTable.Maint(V.DataTable.Maint.RowCount--).DisplayNotClockedIn!FieldValTrim)
+	
+	f.Data.DataView.Close("O","ODV")
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}GAB Version: {5}}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	f.Intrinsic.Control.CallSub("Unload")
+F.Intrinsic.Control.EndTry
+
+Program.Sub.Load.End
+
+Program.Sub.Generate_HTML.Start
+f.Intrinsic.Control.Try
+	v.Local.sError.Declare
+	v.Local.sHold.Declare
+	v.Local.sFile.Declare
+	v.Local.sStatusColor.Declare
+	v.Local.sRowBackColor.Declare
+	v.local.i1.Declare
+	v.Local.i2.Declare
+	v.Local.fActual.Declare
+	v.Local.fEstimate.Declare
+	v.Local.sGridExportFile.Declare
+	v.Local.sHeader.Declare
+	v.Local.sFooter.Declare
+	v.Local.sHeaderContent.Declare		
+	v.Local.bEx.Declare
+	v.Local.sRet.Declare
+	v.Local.sHTMLFinal.Declare
+	v.Local.sColumns.Declare
+	v.Local.sSleepTime.Declare
+	V.Local.iMinCol.Declare
+	V.Local.sMinColor.Declare
+	
+	f.Intrinsic.Control.If(v.DataTable.Temp.Exists)
+		f.Data.DataTable.Close("Temp")
+	f.Intrinsic.Control.EndIf
+	f.Data.DataView.ToDataTable("O","ODV","Temp",True)
+	gui.Form.gsGrid.AddGridviewFromDatatable("gvTemp","Temp")
+	Gui.Form.gsGrid.BESTFITCOLUMNS("gvTemp")
+	gui.Form.gsGrid.SetGridviewPrintOptions("gvTemp","autowidth",False)
+	
+	Gui.Form.gsGrid.GetColumnIndexByName("gvTemp","Min_Remaining",V.Local.iMinCol)
+	
+	f.Intrinsic.String.Split(V.DataTable.Temp.FieldNames,"*!*",v.Local.sColumns)
+	'Loop for the rows
+	f.Intrinsic.Control.For(v.Local.i1,0,v.DataTable.Temp.RowCount--,1)
+		'Set the row back color
+		v.Local.fActual.Set(v.datatable.Temp(v.Local.i1).TotalHours!FieldValTrim)
+		v.Local.fEstimate.Set(v.datatable.Temp(v.Local.i1).EstimatedHours!FieldValTrim)
+		
+		F.Intrinsic.Control.If(V.DataTable.Temp(V.Local.i1).Min_Remaining!FieldVal,<,V.DataTable.Maint(V.DataTable.Maint.RowCount--).Threshold!FieldVal)
+			V.Local.sMinColor.Set("Red")
+		F.Intrinsic.Control.Else
+			v.Local.sMinColor.Set("#F8F8FF")
+		F.Intrinsic.Control.EndIf
+		
+		f.Intrinsic.Control.if(v.Local.fActual,>,v.Local.fEstimate)
+		'LightSalmon
+		v.Local.sRowBackColor.Set("LightSalmon")
+		f.Intrinsic.Control.Else
+			'FrostWhite
+			v.Local.sRowBackColor.Set("#F8F8FF")
+		f.Intrinsic.Control.EndIf	
+
+		f.Intrinsic.Control.If(v.datatable.Temp(v.Local.i1).Indirect!FieldValTrim,=,"I")
+			'Yellow
+			v.Local.sStatusColor.Set("#FFFF00")
+		f.Intrinsic.Control.Elseif(v.datatable.Temp(v.Local.i1).Indirect!FieldValTrim,=,"D",or,v.datatable.Temp(v.Local.i1).Indirect!FieldValTrim,=,"S")
+			'Green
+			v.Local.sStatusColor.Set("#008000")
+		f.Intrinsic.Control.Elseif(v.datatable.Temp(v.Local.i1).Description!FieldValTrim,=,"Not Clocked In")
+			'Black
+			v.Local.sStatusColor.Set("#000000")
+		f.Intrinsic.Control.Elseif(v.datatable.Temp(v.Local.i1).Description!FieldValTrim,=,"CLOCKED IN")
+			'Red
+			v.Local.sStatusColor.Set("Red")
+		f.Intrinsic.Control.Else
+			'Frost White
+			v.Local.sStatusColor.Set("#F8F8FF")
+		f.Intrinsic.Control.EndIf
+		
+		'Format row in grid when exporting to html will not keep the format, so we format by cells!!!!!!!!!!!!!!!!!!!
+		'gui.Form.gsGrid.SetRowAppearance("gvTemp",v.Local.i1,"BackColor",v.Local.sRowBackColor)
+		f.Intrinsic.Control.For(v.Local.i2,1,v.Local.sColumns.UBound,1)
+			gui.Form.gsGrid.SetCellAppearance("gvTemp",v.Local.i2,v.Local.i1,"BackColor",v.Local.sRowBackColor)
+		f.Intrinsic.Control.Next(v.Local.i2)	
+		
+		'Set Status Color
+		gui.Form.gsGrid.SetCellAppearance("gvTemp",0,v.Local.i1,"BackColor",v.Local.sStatusColor)	
+		F.Intrinsic.Control.If(V.Local.sMinColor,=,"Red")
+			gui.Form.gsGrid.SetCellAppearance("gvTemp",V.Local.iMinCol,v.Local.i1,"BackColor",v.Local.sMinColor)
+		F.Intrinsic.Control.EndIf
+	f.Intrinsic.Control.Next(v.Local.i1)	
+
+	f.Intrinsic.Control.CallSub("Format_Grid")	
+	
+	Gui.Form..WindowState(2)
+	
+	'Get Body template
+	f.Intrinsic.String.Build("{0}\GCG_5993_GridExport_{1}_{2}.html",v.Caller.GasDir,v.Caller.CompanyCode,v.Ambient.Now.FormatYYYYMMDDHHNNSS,v.Local.sGridExportFile)
+	Gui.Form.gsGrid.Export(v.Local.sGridExportFile,"html")	
+	
+	'**** Get Header template
+	f.Intrinsic.String.Build("{0}\GCG_5993_Header.html",v.Caller.GasDir,v.Local.sHeader)
+	f.Intrinsic.File.File2String(v.Local.sHeader,v.Local.sHeadercontent)
+	'Replace #YourCompanyLogo with CCC or CCC_Logo.png
+	f.Intrinsic.String.Build("{0}\Custom\5993\{1}\{1}_Logo.png",v.Caller.GlobalDir,v.Caller.CompanyCode,v.Local.sHold)
+	f.Intrinsic.File.Exists(v.Local.sHold,v.Local.bEx)
+	f.Intrinsic.Control.If(v.Local.bEx)
+		f.Intrinsic.String.Build(".\{0}_Logo.png",v.Caller.CompanyCode,v.Local.sHold)
+		f.Intrinsic.String.Build("<img src="{0}" align="left" />",v.Local.sHold,v.Local.sHold)
+		f.Intrinsic.String.Replace(v.Local.sHeaderContent,"#YourCompanyLogo",v.Local.sHold,v.Local.sHeaderContent)
+	f.Intrinsic.Control.Else
+		f.ODBC.Connection!conx.ExecuteAndReturn("select Top 1 '<b>' + rtrim(Name_Company) + '</b>'+ '|||' + Address1 + '|||' + rtrim(City) + ', ' + rtrim(State) + ', ' + rtrim(Code_Zip) from v_COMPANY",v.Local.sRet)
+		f.Intrinsic.Control.If(v.Local.sRet,<>,"")
+			f.Intrinsic.String.Replace(v.Local.sRet,"|||","</br>",v.Local.sRet)
+			f.Intrinsic.String.Replace(v.Local.sHeaderContent,"#YourCompanyLogo",v.local.sRet,v.Local.sHeaderContent)
+		f.Intrinsic.Control.Else
+			f.Intrinsic.String.Replace(v.Local.sHeaderContent,"#YourCompanyLogo",v.Caller.CompanyCode,v.Local.sHeaderContent)			
+		f.Intrinsic.Control.EndIf		
+		
+	f.Intrinsic.Control.EndIf	
+	'Replace #Updated with the time stamp
+	f.Intrinsic.String.Format(v.Ambient.Now,"MM/DD/YYYY Hh:Nn:Ss AMPM",v.Local.sHold)
+	f.Intrinsic.String.Build("Updated {1}: {0}",v.Local.sHold,v.Caller.CompanyCode,v.Local.sHold)
+	F.Intrinsic.String.Replace(v.Local.sHeaderContent,"#Updated",v.Local.sHold,v.Local.sHeaderContent)	
+	'Replace #DeptGroupShift with Selection
+'	f.Intrinsic.String.Build("Department: {0} &nbsp &nbsp &nbsp Group: {1} &nbsp &nbsp &nbsp Shift: {2}  ",v.Args.sDept,v.Args.sGroup,v.Args.sShift,v.Local.sHold)
+	f.Intrinsic.String.Build("Department: {0} &nbsp &nbsp &nbsp Shift: {2}  ",v.Args.sDept,v.Args.sGroup,v.Args.sShift,v.Local.sHold)
+	F.Intrinsic.String.Replace(V.Local.sHeaderContent,"#DeptGroupShift",v.Local.sHold,V.Local.sHeaderContent)	
+	'Global Shop Logo		
+	F.Intrinsic.String.Replace(V.Local.sHeaderContent,"#Logo",".\GAB_GSS_Logo_Green_Dash.png",V.Local.sHeaderContent)
+	'Peplace Header Title
+	F.Intrinsic.String.Replace(V.Local.sHeaderContent,"#Title",V.Global.sTitle,V.Local.sHeaderContent)
+	'Write Header
+	f.Intrinsic.String.Build("{0}\GCG_5993_{1}_Header.html",v.Caller.GasDir,v.Caller.CompanyCode,v.Local.sHeader)
+	f.Intrinsic.File.String2File(v.Local.sHeader,v.Local.sHeaderContent)
+	'**** End Header processing
+	
+	'Get Footer template
+	f.Intrinsic.String.Build("{0}\GCG_5993_Footer.html",v.Caller.GasDir,v.Local.sFooter)
+	
+	'Save HTML file
+	F.Intrinsic.String.Build("{0}\Custom\5993\{1}\GCG_5993_{2}.html",v.Caller.GlobalDir,v.Caller.CompanyCode,V.Global.sMonitor.Trim,V.Local.sFile)
+	F.Intrinsic.File.MERGEHTMLFILES(v.Local.sHeader,v.Local.sFooter,v.Local.sGridExportFile,v.Local.sFile)
+	
+	'Replace Title
+	f.Intrinsic.File.Exists(v.Local.sFile,v.Local.bEx)
+	f.Intrinsic.Control.If(v.Local.bEx)
+		f.Intrinsic.File.File2String(v.Local.sFile,v.Local.sHTMLFinal)
+		f.Intrinsic.String.Build("<title>{0}</title>",V.Global.sMonitor,v.Local.sHold)
+		f.Intrinsic.String.Replace(v.Local.sHTMLFinal,"<title>Document</title>",v.Local.sHold,v.Local.sHTMLFinal)
+		'Inject Refresh Time
+		f.Intrinsic.String.Build("<script type={1}text/javascript{1}>{0}setTimeout(function (){{0}location.reload(1);{0}}, {2});{0}</script>{0}</head>",v.Ambient.NewLine,v.Ambient.DblQuote,v.Global.iRefresh_Rate,v.Local.sHold)
+		f.Intrinsic.String.Replace(v.Local.sHTMLFinal,"</head>",v.Local.sHold,v.Local.sHTMLFinal)		
+		f.Intrinsic.File.String2File(v.Local.sFile,v.Local.sHTMLFinal)
+	f.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.If(V.Global.sMenu,=,"Y")
+		F.Intrinsic.Task.ShellExec(V.Caller.Handle,"OPEN",V.Local.sFile,"","",1)
+	f.Intrinsic.Control.EndIf
+	
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}GAB Version: {5}}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	f.Intrinsic.Control.CallSub("Unload")
+F.Intrinsic.Control.EndTry
+Program.Sub.Generate_HTML.End
+
+Program.Sub.Format_Grid.Start
+f.Intrinsic.Control.Try
+	v.Local.sError.Declare
+	
+	gui.Form.gsGrid.Anchor(15)
+	gui.Form.gsGrid.SuspendLayout()
+	
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Indirect","Visible",False)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","ClockedIn","Visible",False)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Since","Visible",False)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","ManHours","Visible",False)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Dept_Employee","Visible",False)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Pr_Balance_Group","Visible",False)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","ClockedInFlag","Visible",False)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","JobSuffix","Visible",False)		
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","JobSuffixSeq","Visible",False)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Shift","Visible",False)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","PctHoursCompleted","Visible",False)	
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","HoursCompleted","Visible",False)	
+	
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Employee","Caption","Employee ID")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","EmployeeName","Caption","Name")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Job","Caption","Job")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Suffix","Caption","Suffix")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Seq","Caption","Seq")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","WC","Caption","WC")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","PartNumber","Caption","Part Number")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","PartDescription","Caption","Part Description")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","EstimatedHours","Caption","Hrs Est")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Min_Remaining","Caption","Mins Rmng")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","TotalHours","Caption","Hrs Total")
+	
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Status","HeaderHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Employee","HeaderHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","EmployeeName","HeaderHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Job","HeaderHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Suffix","HeaderHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Seq","HeaderHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","WC","HeaderHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","PartNumber","HeaderHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","PartDescription","HeaderHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","EstimatedHours","HeaderHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Min_Remaining","HeaderHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","TotalHours","HeaderHAlignment","Center")
+	
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Status","CellHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Employee","CellHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","EmployeeName","CellHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Job","CellHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Suffix","CellHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Seq","CellHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","WC","CellHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","PartNumber","CellHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","PartDescription","CellHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","EstimatedHours","CellHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Min_Remaining","CellHAlignment","Center")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","TotalHours","CellHAlignment","Center")		
+	
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Status","headerforecolor","Green")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Employee","headerforecolor","Green")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","EmployeeName","headerforecolor","Green")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Job","headerforecolor","Green")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Suffix","headerforecolor","Green")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Seq","headerforecolor","Green")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","WC","headerforecolor","Green")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","PartNumber","headerforecolor","Green")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","PartDescription","headerforecolor","Green")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","EstimatedHours","headerforecolor","Green")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Min_Remaining","headerforecolor","Green")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","TotalHours","headerforecolor","Green")		
+	
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Status","headerfontbold",True)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Employee","headerfontbold",True)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","EmployeeName","headerfontbold",True)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Job","headerfontbold",True)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Suffix","headerfontbold",True)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Seq","headerfontbold",True)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","WC","headerfontbold",True)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","PartNumber","headerfontbold",True)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","PartDescription","headerfontbold",True)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","EstimatedHours","headerfontbold",True)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Min_Remaining","headerfontbold",True)
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","TotalHours","headerfontbold",True)	
+	
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","TotalHours","DisplayCustomNumeric","###,###,###,##0.00")
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","EstimatedHours","DisplayCustomNumeric","###,###,###,##0.00")	
+	gui.Form.gsGrid.SetColumnProperty("gvTemp","Min_Remaining","DisplayCustomNumeric","###,###,###,##0")
+	
+	gui.Form.gsGrid.ResumeLayout()
+	gui.Form.gsGrid.MainView("gvTemp")
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}GAB Version: {5}}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	f.Intrinsic.Control.CallSub("Unload")
+F.Intrinsic.Control.EndTry
+Program.Sub.Format_Grid.End
+
+Program.Sub.Form_UnLoad.Start
+f.Intrinsic.Control.CallSub("Unload")
+Program.Sub.Form_UnLoad.End
+
+Program.Sub.Comments.Start
+${$5$}$3.0.0.0$}$0
+${$6$}$bnguyen$}$20200212154727410$}$tqzwddZCkmoVRWHEL6DZymEEseDhOdziCzRbrpTX9LVjuB0e85y3g2yS5nhKYOiTyDVgIHzplQI=
+Program.Sub.Comments.End
