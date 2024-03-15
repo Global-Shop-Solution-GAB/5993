@@ -1,0 +1,149 @@
+Program.Sub.ScreenSU.Start
+Gui.FormTrueView..Create
+Gui.FormTrueView..Caption("5993 TrueView Launch")
+Gui.FormTrueView..Size(11280,6945)
+Gui.FormTrueView..MinX(0)
+Gui.FormTrueView..MinY(0)
+Gui.FormTrueView..Position(0,0)
+Gui.FormTrueView..BackColor(-2147483633)
+Gui.FormTrueView..MousePointer(0)
+Gui.FormTrueView..maxbutton(False)
+Gui.FormTrueView..sizeable(False)
+Gui.FormTrueView..Event(UnLoad,FormTrueView_UnLoad)
+Gui.FormTrueView..forecolor(0)
+Gui.FormTrueView.GsGridControlTrueView.Create(GsGridControl)
+Gui.FormTrueView.GsGridControlTrueView.Size(10845,6210)
+Gui.FormTrueView.GsGridControlTrueView.Position(120,105)
+Gui.FormTrueView.GsGridControlTrueView.Event(RowCellClick,GsGridControlTrueView_RowCellClick)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String,"")
+
+F.Intrinsic.Control.CallSub(Get_Data)
+F.Intrinsic.Control.CallSub(Set_Properties)
+
+Gui.FormTrueView..Show
+
+Gui.FormTrueView..AlwaysOnTop(True)
+Gui.FormTrueView..AlwaysOnTop(False)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	F.Intrinsic.String.Build("Project: GCG_5993_TrueView_Launch.g2u {0}{0}Subroutine: {1}{0}Error Occurred {2} with description {3}",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(FormTrueView_UnLoad)
+Function.Intrinsic.Control.EndIf
+Program.Sub.Main.End
+
+Program.Sub.GsGridControlTrueView_RowCellClick.Start
+F.Intrinsic.Control.SetErrorHandler("GsGridControlTrueView_RowCellClick_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String,"")
+v.Local.iPIDReturn.Declare(Long,0)
+v.Local.sStandAlone.Declare(String,"")
+V.Local.sSwitch.Declare(String,"")
+
+F.Intrinsic.Control.If(V.Args.Column.UCase,=,"LAUNCH")
+	f.Intrinsic.String.Build("{0}\GCG_5993_Generate_HTML.g2u",v.Caller.GasDir,v.Local.sStandAlone)
+	F.Intrinsic.String.Build("{0}||Y",V.DataTable.Monitor(V.Args.RowHandle).Monitor!FieldValTrim,V.Local.sSwitch)
+	function.Global.General.CallAsyncGAS(v.Local.sStandAlone,V.Local.sSwitch,-1,v.Local.iPIDReturn)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("GsGridControlTrueView_RowCellClick_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	F.Intrinsic.String.Build("Project: GCG_5993_TrueView_Launch.g2u {0}{0}Subroutine: {1}{0}Error Occurred {2} with description {3}",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(FormTrueView_UnLoad)
+Function.Intrinsic.Control.EndIf
+Program.Sub.GsGridControlTrueView_RowCellClick.End
+
+Program.Sub.FormTrueView_UnLoad.Start
+F.Intrinsic.Control.SetErrorHandler("FormTrueView_UnLoad_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String,"")
+
+F.Intrinsic.Control.End
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("FormTrueView_UnLoad_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	F.Intrinsic.String.Build("Project: GCG_5993_TrueView_Launch.g2u {0}{0}Subroutine: {1}{0}Error Occurred {2} with description {3}",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.End
+Function.Intrinsic.Control.EndIf
+Program.Sub.FormTrueView_UnLoad.End
+
+Program.Sub.Get_Data.Start
+F.Intrinsic.Control.SetErrorHandler("Get_Data_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String,"")
+
+F.ODBC.Connection!Con.OpenCompanyConnection
+F.Data.DataTable.CreateFromSQL("Monitor","con","Select Monitor, Monitor_Note, '' as Launch From GCG_5993_Selection",True)
+F.ODBC.Connection!Con.Close
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Get_Data_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	F.Intrinsic.String.Build("Project: GCG_5993_TrueView_Launch.g2u {0}{0}Subroutine: {1}{0}Error Occurred {2} with description {3}",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(FormTrueView_UnLoad)
+Function.Intrinsic.Control.EndIf
+Program.Sub.Get_Data.End
+
+Program.Sub.Set_Properties.Start
+F.Intrinsic.Control.SetErrorHandler("Set_Properties_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String,"")
+
+Gui.FormTrueView.GsGridControlTrueView.AddGridviewFromDatatable("gvMonitor","Monitor")
+
+Gui.FormTrueView.GsGridControlTrueView.SetColumnProperty("gvMonitor","Monitor","Caption","Monitor")
+Gui.FormTrueView.GsGridControlTrueView.SetColumnProperty("gvMonitor","Monitor","HeaderBackColor","#58a758")
+Gui.FormTrueView.GsGridControlTrueView.SetColumnProperty("gvMonitor","Monitor","HeaderFontBold",True)
+Gui.FormTrueView.GsGridControlTrueView.SetColumnProperty("gvMonitor","Monitor","AllowEdit",False)
+Gui.FormTrueView.GsGridControlTrueView.SetColumnProperty("gvMonitor","Monitor","ReadOnly",True)
+
+Gui.FormTrueView.GsGridControlTrueView.SetColumnProperty("gvMonitor","Monitor_Note","Caption","Monitor Note")
+Gui.FormTrueView.GsGridControlTrueView.SetColumnProperty("gvMonitor","Monitor_Note","HeaderBackColor","#58a758")
+Gui.FormTrueView.GsGridControlTrueView.SetColumnProperty("gvMonitor","Monitor_Note","HeaderFontBold",True)
+Gui.FormTrueView.GsGridControlTrueView.SetColumnProperty("gvMonitor","Monitor_Note","AllowEdit",False)
+Gui.FormTrueView.GsGridControlTrueView.SetColumnProperty("gvMonitor","Monitor_Note","ReadOnly",True)
+
+Gui.FormTrueView.GsGridControlTrueView.SetColumnProperty("gvMonitor","Launch","Caption"," ")
+Gui.FormTrueView.GsGridControlTrueView.SetColumnProperty("gvMonitor","Launch","HeaderBackColor","#58a758")
+Gui.FormTrueView.GsGridControlTrueView.SetColumnProperty("gvMonitor","Launch","CellBackColor","Grey")
+Gui.FormTrueView.GsGridControlTrueView.SetColumnProperty("gvMonitor","Launch","HeaderFontBold",True)
+Gui.FormTrueView.GsGridControlTrueView.SetColumnProperty("gvMonitor","Launch","AllowEdit",False)
+Gui.FormTrueView.GsGridControlTrueView.SetColumnProperty("gvMonitor","Launch","ReadOnly",True)
+Gui.FormTrueView.GsGridControlTrueView.SetColumnProperty("gvMonitor","Launch","MaxWidth","75")
+Gui.FormTrueView.GsGridControlTrueView.ColumnEdit("gvMonitor","Launch","EditorButton","Launch")
+
+Gui.FormTrueView.GsGridControlTrueView.MainView("gvMonitor")
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Set_Properties_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	F.Intrinsic.String.Build("Project: GCG_5993_TrueView_Launch.g2u {0}{0}Subroutine: {1}{0}Error Occurred {2} with description {3}",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(FormTrueView_UnLoad)
+Function.Intrinsic.Control.EndIf
+Program.Sub.Set_Properties.End
