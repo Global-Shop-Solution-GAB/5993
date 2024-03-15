@@ -1,0 +1,531 @@
+Program.Sub.ScreenSU.Start
+Gui.Form..create
+Gui.Form..caption("5993 WO in Progress Maintenance")
+Gui.Form..size(10905,7800)
+Gui.Form..minx(0)
+Gui.Form..miny(0)
+Gui.Form..position(0,0)
+Gui.Form..event(UnLoad,Form_UnLoad)
+Gui.Form..forecolor(0)
+Gui.Form..BackColor(-2147483633)
+Gui.Form..maxbutton(False)
+Gui.Form..mousepointer(0)
+Gui.Form..sizeable(False)
+Gui.Form.gsBalGroup.Create(GsGridControl)
+Gui.Form.gsBalGroup.Size(3405,5085)
+Gui.Form.gsBalGroup.Position(7245,1665)
+Gui.Form.gsBalGroup.TabStop(True)
+Gui.Form.gsBalGroup.TabIndex(8)
+Gui.Form.gsBalGroup.Visible(False)
+Gui.Form.cmdSave.Create(Button)
+Gui.Form.cmdSave.Size(855,375)
+Gui.Form.cmdSave.Position(90,6870)
+Gui.Form.cmdSave.TabStop(True)
+Gui.Form.cmdSave.TabIndex(7)
+Gui.Form.cmdSave.Caption("Save")
+Gui.Form.cmdSave.DefaultValue("")
+Gui.Form.cmdSave.Event(Click,cmdSave_Click)
+Gui.Form.txtRefreshTime.Create(TextBox,"300",True,840,300,0,105,960,True,1,"Arial",8,-2147483643,1)
+Gui.Form.txtRefreshTime.TabStop(True)
+Gui.Form.txtRefreshTime.TabIndex(6)
+Gui.Form.txtRefreshTime.NumericOnly(2)
+Gui.Form.txtRefreshTime.ForeColor(0)
+Gui.Form.txtRefreshTime.Event(LostFocus,txtRefreshTime_LostFocus)
+Gui.Form.lbl1.Create(Label,"Refresh Interval (secs)",True,1845,255,0,105,750,True,0,"Arial",8,-2147483633,0)
+Gui.Form.ddlDisplayNotClockedIn.Create(DropDownList)
+Gui.Form.ddlDisplayNotClockedIn.Size(1590,330)
+Gui.Form.ddlDisplayNotClockedIn.Position(8430,375)
+Gui.Form.ddlDisplayNotClockedIn.TabStop(True)
+Gui.Form.ddlDisplayNotClockedIn.TabIndex(4)
+Gui.Form.lbl7.Create(Label,"Display Not Logged In",True,1980,255,1,8415,150,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl7.DefaultValue("")
+Gui.Form.txtStopRefreshTime.Create(TextBox,"",True,570,300,0,2010,960,True,0,"Arial",8,-2147483643,1)
+Gui.Form.txtStopRefreshTime.MaxLength(4)
+Gui.Form.txtStopRefreshTime.NumericOnly(2)
+Gui.Form.txtStopRefreshTime.ForeColor(0)
+Gui.Form.txtStopRefreshTime.Event(LostFocus,txtStopRefreshTime_LostFocus)
+Gui.Form.lbl2.Create(Label,"Stop Refreshing at",True,1575,255,0,1965,750,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl3.Create(Label,"(ex: 2345 for 1145pm)",True,2115,255,0,2655,1050,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lblBalGroup.Create(Label,"Select Balancing Group(s)",False,1935,255,0,7245,1440,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lblMonitor.Create(Label,"Monitor Name",True,1935,255,0,105,150,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lblMonitorNote.Create(Label,"Monitor Title",True,1935,255,0,3435,150,True,0,"Arial",8,-2147483633,0)
+Gui.Form.txtMonitorNote.Create(TextBox,"",True,4875,300,0,3435,360,True,0,"Arial",8,-2147483643,1)
+Gui.Form.txtMonitorNote.MaxLength(50)
+Gui.Form.txtMonitorNote.ForeColor(0)
+Gui.Form.lblDept.Create(Label,"Select Department(s)",True,1935,255,0,3675,1440,True,0,"Arial",8,-2147483633,0)
+Gui.Form.gsDept.Create(GsGridControl)
+Gui.Form.gsDept.Size(3405,5085)
+Gui.Form.gsDept.Position(3675,1665)
+Gui.Form.gsDept.TabStop(True)
+Gui.Form.gsDept.TabIndex(8)
+Gui.Form.lblShift.Create(Label,"Select Shift(s)",True,1935,255,0,105,1440,True,0,"Arial",8,-2147483633,0)
+Gui.Form.gsShift.Create(GsGridControl)
+Gui.Form.gsShift.Size(3405,5085)
+Gui.Form.gsShift.Position(105,1665)
+Gui.Form.gsShift.TabStop(True)
+Gui.Form.gsShift.TabIndex(8)
+Gui.Form.txtMonitor.Create(TextBox,"",True,2760,300,0,105,360,True,0,"Arial",8,-2147483643,1)
+Gui.Form.txtMonitor.Event(LostFocus,txtMonitor_LostFocus)
+Gui.Form.txtMonitor.ForeColor(0)
+Gui.Form.cmdMonitor.Create(Button)
+Gui.Form.cmdMonitor.Size(420,375)
+Gui.Form.cmdMonitor.Position(2940,330)
+Gui.Form.cmdMonitor.Caption("^")
+Gui.Form.cmdMonitor.Event(Click,cmdMonitor_Click)
+Gui.Form.lbl4.Create(Label,"Minutes Remaining Threshold",True,2445,255,0,4710,750,True,0,"Arial",8,-2147483633,0)
+Gui.Form.txtMins.Create(TextBox,"",True,570,300,0,4710,960,True,0,"Arial",8,-2147483643,1)
+Gui.Form.txtMins.ForeColor(0)
+Gui.Form.txtMins.MaxLength(4)
+Gui.Form.txtMins.NumericOnly(2)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.External.Include.Library("GCG_5993_Check_Create_Folder.lib")
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String,"")
+v.Local.sRet.Declare(String,"")
+v.Local.iCnt.Declare(String,"")
+
+'This project will create trueview web pages that is similar with the screen: On Line System > View > Current Work in Progress (No Dollars)
+'User will maintain the selection in this script: Department + Employee Group (Employee_MSTR.Pr_Balance_Group) + Shift + DisplayNotClockedIn
+'This program will be run from On Line System > Administration > Maintenance - Current WO in Progress Trueview - 5993		
+
+'Call subs from lib
+F.Intrinsic.Control.CallSub(Check_and_Create_Custom_Folder)
+F.Intrinsic.Control.CallSub(checkTable)
+F.Intrinsic.Control.CallSub(Get_Data)
+F.Intrinsic.Control.CallSub(Set_Properties)
+	
+gui.Form..Show
+
+Gui.Form..AlwaysOnTop(True)
+Gui.Form..AlwaysOnTop(False)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	F.Intrinsic.String.Build("Project: GCG_5993_Maintenance.g2u {0}{0}Subroutine: {1}{0}Error Occurred {2} with description {3}",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.Control.CallSub(Form_UnLoad)
+Function.Intrinsic.Control.EndIf
+Program.Sub.Main.End
+
+Program.Sub.Form_UnLoad.Start
+F.Intrinsic.Control.SetErrorHandler("Form_UnLoad_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String,"")
+
+f.Intrinsic.Control.If(v.ODBC.conx.State,=,1)
+	F.ODBC.Connection!conX.close
+f.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.End
+	
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Form_UnLoad_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	F.Intrinsic.String.Build("Project: GCG_5993_Maintenance.g2u {0}{0}Subroutine: {1}{0}Error Occurred {2} with description {3}",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.Control.End
+Function.Intrinsic.Control.EndIf
+Program.Sub.Form_UnLoad.End
+
+Program.Sub.cmdSave_Click.Start
+F.Intrinsic.Control.SetErrorHandler("cmdSave_Click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String,"")
+
+'Monitor, Monitor_Note, RefreshTime, StopTime, DisplayNotClockedIn
+F.Intrinsic.Control.If(V.DataView.Monitor!VMonitor.RowCount--,=,-1)
+	F.Data.DataTable.AddRow("Monitor","Monitor",V.Screen.Form!txtMonitor.Value,"Monitor_Note",V.Screen.Form!txtMonitorNote.Text,"RefreshTime",V.Screen.Form!txtRefreshTime.Text,"StopTime",V.Screen.Form!txtStopRefreshTime.Text,"DisplayNotClockedIn",V.Screen.Form!ddlDisplayNotClockedIn.Value)
+F.Intrinsic.Control.Else
+	F.Data.DataView.SetValue("Monitor","VMonitor",-1,"Monitor",V.Screen.Form!txtMonitor.Text,"Monitor_Note",V.Screen.Form!txtMonitorNote.Text,"RefreshTime",V.Screen.Form!txtRefreshTime.Text,"StopTime",V.Screen.Form!txtStopRefreshTime.Text,"DisplayNotClockedIn",V.Screen.Form!ddlDisplayNotClockedIn.Value)
+F.Intrinsic.Control.EndIf
+
+F.ODBC.Connection!Con.OpenCompanyConnection
+
+F.Data.DataTable.SaveToDB("Monitor","Con","GCG_5993_Selection","Monitor",256,"Monitor@!@Monitor*!*Monitor_Note@!@Monitor_Note*!*RefreshTime@!@RefreshTime*!*StopTime@!@StopTime*!*DisplayNotClockedIn@!@DisplayNotClockedIn")
+
+'F.Data.DataTable.SaveToDB("BalGroup","Con","GCG_5993_BalGroup","Monitor*!*Bal_Group",256,"Monitor@!@Monitor*!*Bal_Group@!@Bal_Group*!*Selection@!@Selection")
+
+F.Data.DataTable.SaveToDB("Shift","Con","GCG_5993_Shift","Monitor*!*Shift",256,"Monitor@!@Monitor*!*Shift@!@Shift*!*Selection@!@Selection")
+
+F.Data.DataTable.SaveToDB("Dept","Con","GCG_5993_Dept","Monitor*!*Dept",256,"Monitor@!@Monitor*!*Dept@!@Dept*!*Selection@!@Selection")
+
+F.Intrinsic.UI.Msgbox("Monitor Saved........")
+
+F.ODBC.Connection!Con.Close
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdSave_Click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	F.Intrinsic.String.Build("Project: GCG_5993_Maintenance.g2u {0}{0}Subroutine: {1}{0}Error Occurred {2} with description {3}",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.Control.CallSub(Form_UnLoad)
+Function.Intrinsic.Control.EndIf
+Program.Sub.cmdSave_Click.End
+
+Program.Sub.Get_Data.Start
+F.Intrinsic.Control.SetErrorHandler("Get_Data_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String,"")
+V.Local.sSql.Declare(String,"")
+
+F.ODBC.Connection!Con.OpenCompanyConnection
+Gui.Form.txtMins.Text(0)
+gui.Form.ddlDisplayNotClockedIn.AddItem("No")
+gui.Form.ddlDisplayNotClockedIn.AddItem("Yes")
+gui.Form.ddlDisplayNotClockedIn.ListIndex(0)
+
+V.Local.sSql.Set("Select Monitor, Monitor_Note, RefreshTime, StopTime, Threshold, DisplayNotClockedIn From GCG_5993_Selection")
+
+F.Data.DataTable.CreateFromSQL("Monitor","con",V.Local.sSql,True)
+
+F.Intrinsic.Control.If(V.DataTable.Monitor.RowCount--,=,-1)
+	Gui.Form.txtRefreshTime.Text(300)
+	Gui.Form.txtStopRefreshTime.Text(2345)
+F.Intrinsic.Control.Else
+	Gui.Form.txtRefreshTime.Text(V.DataTable.Monitor(0).RefreshTime!FieldVal)
+	Gui.Form.txtStopRefreshTime.Text(V.DataTable.Monitor(0).StopTime!FieldVal)
+F.Intrinsic.Control.EndIf
+	
+'V.Local.sSql.Set("Select Monitor, Bal_Group, Selection From GCG_5993_BalGroup Where Monitor = '-1'")
+
+'F.Data.DataTable.CreateFromSQL("BalGroup","con",V.Local.sSql,True)
+
+V.Local.sSql.Set("Select Monitor, Shift, Selection From GCG_5993_Shift Where Monitor = '-1'")
+
+F.Data.DataTable.CreateFromSQL("Shift","con",V.Local.sSql,True)
+
+V.Local.sSql.Set("Select Monitor, Dept, Selection From GCG_5993_DEPT Where Monitor = '-1'")
+
+F.Data.DataTable.CreateFromSQL("Dept","con",V.Local.sSql,True)
+
+F.ODBC.Connection!Con.Close
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Get_Data_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	F.Intrinsic.String.Build("Project: GCG_5993_Maintenance.g2u {0}{0}Subroutine: {1}{0}Error Occurred {2} with description {3}",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.Control.CallSub(Form_UnLoad)
+Function.Intrinsic.Control.EndIf
+Program.Sub.Get_Data.End
+
+Program.Sub.Set_Properties.Start
+F.Intrinsic.Control.SetErrorHandler("Set_Properties_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String,"")
+
+'Gui.Form.gsBalGroup.AddGridviewFromDatatable("gvBalGroup","BalGroup")
+
+'Gui.Form.gsBalGroup.SetColumnProperty("gvBalGroup","Monitor","Caption","Monitor")
+'Gui.Form.gsBalGroup.SetColumnProperty("gvBalGroup","Monitor","Visible",False)
+'Gui.Form.gsBalGroup.SetColumnProperty("gvBalGroup","Monitor","HeaderBackColor","#58a758")
+'Gui.Form.gsBalGroup.SetColumnProperty("gvBalGroup","Monitor","HeaderFontBold",True)
+'Gui.Form.gsBalGroup.SetColumnProperty("gvBalGroup","Monitor","AllowEdit",False)
+'Gui.Form.gsBalGroup.SetColumnProperty("gvBalGroup","Monitor","ReadOnly",True)
+
+'Gui.Form.gsBalGroup.SetColumnProperty("gvBalGroup","Bal_Group","Caption","Balancing Group")
+'Gui.Form.gsBalGroup.SetColumnProperty("gvBalGroup","Bal_Group","HeaderBackColor","#58a758")
+'Gui.Form.gsBalGroup.SetColumnProperty("gvBalGroup","Bal_Group","HeaderFontBold",True)
+'Gui.Form.gsBalGroup.SetColumnProperty("gvBalGroup","Bal_Group","AllowEdit",False)
+'Gui.Form.gsBalGroup.SetColumnProperty("gvBalGroup","Bal_Group","ReadOnly",True)
+
+'Gui.Form.gsBalGroup.SetColumnProperty("gvBalGroup","Selection","Caption","Selection")
+'Gui.Form.gsBalGroup.SetColumnProperty("gvBalGroup","Selection","HeaderBackColor","#58a758")
+'Gui.Form.gsBalGroup.SetColumnProperty("gvBalGroup","Selection","HeaderFontBold",True)
+'Gui.Form.gsBalGroup.SetColumnProperty("gvBalGroup","Selection","AllowEdit",True)
+'Gui.Form.gsBalGroup.SetColumnProperty("gvBalGroup","Selection","ReadOnly",False)
+
+'Gui.Form.gsBalGroup.MainView("gvBalGroup")
+
+Gui.Form.gsDept.AddGridviewFromDatatable("gvDept","Dept")
+
+Gui.Form.gsDept.SetColumnProperty("gvDept","Monitor","Caption","Monitor")
+Gui.Form.gsDept.SetColumnProperty("gvDept","Monitor","Visible",False)
+Gui.Form.gsDept.SetColumnProperty("gvDept","Monitor","HeaderBackColor","#58a758")
+Gui.Form.gsDept.SetColumnProperty("gvDept","Monitor","HeaderFontBold",True)
+Gui.Form.gsDept.SetColumnProperty("gvDept","Monitor","AllowEdit",False)
+Gui.Form.gsDept.SetColumnProperty("gvDept","Monitor","ReadOnly",True)
+
+Gui.Form.gsDept.SetColumnProperty("gvDept","Dept","Caption","Department")
+Gui.Form.gsDept.SetColumnProperty("gvDept","Dept","HeaderBackColor","#58a758")
+Gui.Form.gsDept.SetColumnProperty("gvDept","Dept","HeaderFontBold",True)
+Gui.Form.gsDept.SetColumnProperty("gvDept","Dept","AllowEdit",False)
+Gui.Form.gsDept.SetColumnProperty("gvDept","Dept","ReadOnly",True)
+
+Gui.Form.gsDept.SetColumnProperty("gvDept","Selection","Caption","Selection")
+Gui.Form.gsDept.SetColumnProperty("gvDept","Selection","HeaderBackColor","#58a758")
+Gui.Form.gsDept.SetColumnProperty("gvDept","Selection","HeaderFontBold",True)
+Gui.Form.gsDept.SetColumnProperty("gvDept","Selection","AllowEdit",True)
+Gui.Form.gsDept.SetColumnProperty("gvDept","Selection","ReadOnly",False)
+
+Gui.Form.gsDept.MainView("gvDept")
+
+Gui.Form.gsShift.AddGridviewFromDatatable("gvShift","Shift")
+
+Gui.Form.gsShift.SetColumnProperty("gvShift","Monitor","Caption","Monitor")
+Gui.Form.gsShift.SetColumnProperty("gvShift","Monitor","Visible",False)
+Gui.Form.gsShift.SetColumnProperty("gvShift","Monitor","HeaderBackColor","#58a758")
+Gui.Form.gsShift.SetColumnProperty("gvShift","Monitor","HeaderFontBold",True)
+Gui.Form.gsShift.SetColumnProperty("gvShift","Monitor","AllowEdit",False)
+Gui.Form.gsShift.SetColumnProperty("gvShift","Monitor","ReadOnly",True)
+
+Gui.Form.gsShift.SetColumnProperty("gvShift","Shift","Caption","Shift")
+Gui.Form.gsShift.SetColumnProperty("gvShift","Shift","HeaderBackColor","#58a758")
+Gui.Form.gsShift.SetColumnProperty("gvShift","Shift","HeaderFontBold",True)
+Gui.Form.gsShift.SetColumnProperty("gvShift","Shift","AllowEdit",False)
+Gui.Form.gsShift.SetColumnProperty("gvShift","Shift","ReadOnly",True)
+
+Gui.Form.gsShift.SetColumnProperty("gvShift","Selection","Caption","Selection")
+Gui.Form.gsShift.SetColumnProperty("gvShift","Selection","HeaderBackColor","#58a758")
+Gui.Form.gsShift.SetColumnProperty("gvShift","Selection","HeaderFontBold",True)
+Gui.Form.gsShift.SetColumnProperty("gvShift","Selection","AllowEdit",True)
+Gui.Form.gsShift.SetColumnProperty("gvShift","Selection","ReadOnly",False)
+
+Gui.Form.gsShift.MainView("gvShift")
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Set_Properties_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	F.Intrinsic.String.Build("Project: GCG_5993_Maintenance.g2u {0}{0}Subroutine: {1}{0}Error Occurred {2} with description {3}",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.Control.CallSub(Form_UnLoad)
+Function.Intrinsic.Control.EndIf
+Program.Sub.Set_Properties.End
+
+Program.Sub.txtMonitor_LostFocus.Start
+F.Intrinsic.Control.SetErrorHandler("txtMonitor_LostFocus_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String,"")
+V.Local.sFilter.Declare(String,"")
+V.Local.sSql.Declare(String,"")
+V.Local.sMonitor.Declare(String,"")
+
+Gui.Form..Enabled(False)
+
+F.Intrinsic.Control.BlockEvents
+Gui.Form.txtMonitorNote.SetFocus
+
+'Gui.Form.gsBalGroup.SuspendLayout
+Gui.Form.gsDept.SuspendLayout
+Gui.Form.gsShift.SuspendLayout
+
+V.Local.sMonitor.Set(V.Screen.Form!txtMonitor.Text)
+
+F.Intrinsic.String.Build("Monitor = '{0}'",V.Local.sMonitor.Trim,V.Local.sFilter)
+
+F.Intrinsic.Control.If(V.DataView.Monitor!VMonitor.Exists)
+	F.Data.DataView.Close("Monitor","VMonitor")
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.If(V.Local.sMonitor.Trim,=,"")
+	Gui.Form.txtMonitorNote.Text("")
+	F.Intrinsic.Control.If(V.DataTable.Monitor.RowCount--,=,-1)
+		Gui.Form.txtRefreshTime.Text(300)
+		Gui.Form.txtStopRefreshTime.Text(2345)
+	F.Intrinsic.Control.Else
+		Gui.Form.txtRefreshTime.Text(V.DataTable.Monitor(0).RefreshTime!FieldVal)
+		Gui.Form.txtStopRefreshTime.Text(V.DataTable.Monitor(0).StopTime!FieldVal)
+	F.Intrinsic.Control.EndIf
+	Gui.Form.txtMins.Text(0)
+	Gui.Form.ddlDisplayNotClockedIn.ListIndex(0)
+	F.Data.DataTable.DeleteRow("Dept")
+	F.Data.DataTable.AcceptChanges("Dept")
+'	F.Data.DataTable.DeleteRow("BalGroup")
+'	F.Data.DataTable.AcceptChanges("BalGroup")
+	F.Data.DataTable.DeleteRow("Shift")
+	F.Data.DataTable.AcceptChanges("Shift")
+	Gui.Form.gsBalGroup.ResumeLayout
+	Gui.Form.gsDept.ResumeLayout
+	Gui.Form.gsShift.ResumeLayout
+	F.Intrinsic.Control.UnBlockEvents
+	Gui.Form..Enabled(True)
+	F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.EndIf
+
+F.Data.DataView.Create("Monitor","VMonitor",22,V.Local.sFilter,"")
+
+F.Intrinsic.Control.If(V.DataView.Monitor!VMonitor.RowCount--,<>,-1)
+	Gui.Form.txtMonitorNote.Text(V.DataView.Monitor!VMonitor(V.DataView.Monitor!VMonitor.RowCount--).Monitor_Note!FieldValTrim)
+	Gui.Form.txtRefreshTime.Text(V.DataView.Monitor!VMonitor(V.DataView.Monitor!VMonitor.RowCount--).RefreshTime!FieldVal)
+	Gui.Form.txtStopRefreshTime.Text(V.DataView.Monitor!VMonitor(V.DataView.Monitor!VMonitor.RowCount--).StopTime!FieldVal)
+	Gui.Form.ddlDisplayNotClockedIn.Text(V.DataView.Monitor!VMonitor(V.DataView.Monitor!VMonitor.RowCount--).DisplayNotClockedIn!FieldValTrim)
+	Gui.Form.txtMins.Text(V.DataView.Monitor!VMonitor(V.DataView.Monitor!VMonitor.RowCount--).Threshold!FieldVal)
+F.Intrinsic.Control.Else
+	Gui.Form.txtMonitorNote.Text("")
+	F.Intrinsic.Control.If(V.DataTable.Monitor.RowCount--,=,-1)
+		Gui.Form.txtRefreshTime.Text(300)
+		Gui.Form.txtStopRefreshTime.Text(2345)
+	F.Intrinsic.Control.Else
+		Gui.Form.txtRefreshTime.Text(V.DataTable.Monitor(0).RefreshTime!FieldVal)
+		Gui.Form.txtStopRefreshTime.Text(V.DataTable.Monitor(0).StopTime!FieldVal)
+	F.Intrinsic.Control.EndIf
+	Gui.Form.txtMins.Text(0)
+	Gui.Form.ddlDisplayNotClockedIn.ListIndex(0)
+F.Intrinsic.Control.EndIf
+
+F.ODBC.Connection!Con.OpenCompanyConnection
+
+'F.Intrinsic.String.Build("Select Monitor, a.Bal_Group, Selection From GCG_5993_BalGroup a Right Join Balancing_Group b On a.Bal_Group = b.Bal_Group Where Monitor = '{0}'",V.Local.sMonitor.Trim,V.Local.sSql)
+
+'F.Data.DataTable.CreateFromSQL("Temp","con",V.Local.sSql,True)
+'F.Intrinsic.Control.If(V.DataTable.Temp.RowCount--,=,-1)
+'	F.Intrinsic.String.Build("Select '{0}' as Monitor, Bal_Group, Cast(0 as Bit) as Selection From Balancing_Group",V.Local.sMonitor.Trim,V.Local.sSql)
+'	F.Data.DataTable.Close("Temp")
+'	F.Data.DataTable.CreateFromSQL("Temp","con",V.Local.sSql,True)
+'F.Intrinsic.Control.EndIf
+
+'F.Data.DataTable.DeleteRow("BalGroup")
+'F.Data.DataTable.AcceptChanges("BalGroup")
+
+'F.Data.DataTable.Merge("Temp","BalGroup",False,4)
+
+'F.Data.DataTable.Close("Temp")
+
+F.Intrinsic.String.Build("Select Distinct Monitor, a.Shift, Selection From GCG_5993_Shift a Right Join Employee_Mstr b on a.Shift = b.Shift Where Monitor = '{0}'",V.Local.sMonitor.Trim,V.Local.sSql)
+
+F.Data.DataTable.CreateFromSQL("Temp","con",V.Local.sSql,True)
+F.Intrinsic.Control.If(V.DataTable.Temp.RowCount--,=,-1)
+	F.Intrinsic.String.Build("Select Distinct '{0}' as Monitor, Shift, Cast(0 as Bit) as Selection From Employee_Mstr",V.Local.sMonitor.Trim,V.Local.sSql)
+	F.Data.DataTable.Close("Temp")
+	F.Data.DataTable.CreateFromSQL("Temp","con",V.Local.sSql,True)
+F.Intrinsic.Control.EndIf
+
+F.Data.DataTable.DeleteRow("Shift")
+F.Data.DataTable.AcceptChanges("Shift")
+
+F.Data.DataTable.Merge("Temp","Shift",False,4)
+
+F.Data.DataTable.Close("Temp")
+
+F.Intrinsic.String.Build("Select Distinct Monitor, Dept, Selection From GCG_5993_DEPT a Right Join Employee_Mstr b On a.Dept = b.Dept_Employee Where Monitor = '{0}'",V.Local.sMonitor.Trim,V.Local.sSql)
+
+F.Data.DataTable.CreateFromSQL("Temp","con",V.Local.sSql,True)
+F.Intrinsic.Control.If(V.DataTable.Temp.RowCount--,=,-1)
+	F.Intrinsic.String.Build("Select Distinct '{0}' as Monitor, ltrim(rtrim(DEPT_EMPLOYEE)) as Dept, Cast(0 as Bit) as Selection From Employee_Mstr",V.Local.sMonitor.Trim,V.Local.sSql)
+	F.Data.DataTable.Close("Temp")
+	F.Data.DataTable.CreateFromSQL("Temp","con",V.Local.sSql,True)
+F.Intrinsic.Control.EndIf
+
+F.Data.DataTable.DeleteRow("Dept")
+F.Data.DataTable.AcceptChanges("Dept")
+
+F.Data.DataTable.Merge("Temp","Dept",False,4)
+
+F.Data.DataTable.Close("Temp")
+
+F.ODBC.Connection!Con.Close
+
+'Gui.Form.gsBalGroup.ResumeLayout
+Gui.Form.gsDept.ResumeLayout
+Gui.Form.gsShift.ResumeLayout
+
+F.Intrinsic.Control.UnBlockEvents
+
+Gui.Form..Enabled(True)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("txtMonitor_LostFocus_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	F.Intrinsic.String.Build("Project: GCG_5993_Maintenance.g2u {0}{0}Subroutine: {1}{0}Error Occurred {2} with description {3}",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.Control.CallSub(Form_UnLoad)
+Function.Intrinsic.Control.EndIf
+Program.Sub.txtMonitor_LostFocus.End
+
+Program.Sub.cmdMonitor_Click.Start
+F.Intrinsic.Control.SetErrorHandler("cmdMonitor_Click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String,"")
+V.Local.sSql.Declare(String,"")
+V.Local.sTitles.Declare(String,"")
+V.Local.sWidths.Declare(String,"")
+V.Local.sRet.Declare(String,"")
+	
+V.Local.sSql.Set("Select Monitor, Monitor_Note From GCG_5993_Selection")
+
+F.Intrinsic.UI.SetBrowserHotTypeAhead(True)
+
+V.Local.sTitles.Set("Monitor*!*Monitor Note")
+V.Local.sWidths.Set("1800*!*6250")
+
+F.Intrinsic.String.Split(V.Local.sTitles,"*!*",V.Local.sTitles)
+F.Intrinsic.String.Split(V.Local.sWidths,"*!*",V.Local.sWidths)
+
+F.ODBC.Connection!Con.OpenCompanyConnection
+
+F.Intrinsic.UI.Browser("Select Monitor","con",V.Local.sSql,V.Local.sTitles,V.Local.sWidths,10200,9000,V.Local.sRet)
+
+F.ODBC.Connection!Con.Close
+
+F.Intrinsic.Control.If(V.Local.sRet,<>,V.Ambient.Cancel)
+	F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+	Gui.Form.txtMonitor.Text(V.Local.sRet(0).Trim)
+	Gui.Form.txtMonitorNote.Text(V.Local.sRet(1).Trim)
+	F.Intrinsic.Control.CallSub(TxtMonitor_LostFocus)
+F.Intrinsic.Control.EndIf
+	
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdMonitor_Click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	F.Intrinsic.String.Build("Project: GCG_5993_Maintenance.g2u {0}{0}Subroutine: {1}{0}Error Occurred {2} with description {3}",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.Control.CallSub(Form_UnLoad)
+Function.Intrinsic.Control.EndIf
+Program.Sub.cmdMonitor_Click.End
+
+Program.Sub.txtRefreshTime_LostFocus.Start
+F.Intrinsic.Control.SetErrorHandler("txtRefreshTime_LostFocus_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String,"")
+
+F.Intrinsic.Control.If(V.Screen.Form!txtRefreshTime.Text,<,1)
+	Gui.Form.txtRefreshTime.Text("1")
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("txtRefreshTime_LostFocus_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	F.Intrinsic.String.Build("Project: GCG_5993_Maintenance.g2u {0}{0}Subroutine: {1}{0}Error Occurred {2} with description {3}",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.Control.CallSub(Form_UnLoad)
+Function.Intrinsic.Control.EndIf
+Program.Sub.txtRefreshTime_LostFocus.End
+
+Program.Sub.txtStopRefreshTime_LostFocus.Start
+F.Intrinsic.Control.SetErrorHandler("txtStopRefreshTime_LostFocus_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String,"")
+
+F.Intrinsic.Control.If(V.Screen.Form!txtStopRefreshTime.Text,>,2345)
+	Gui.Form.txtStopRefreshTime.Text("2345")
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("txtStopRefreshTime_LostFocus_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	F.Intrinsic.String.Build("Project: GCG_5993_Maintenance.g2u {0}{0}Subroutine: {1}{0}Error Occurred {2} with description {3}",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.Control.CallSub(Form_UnLoad)
+Function.Intrinsic.Control.EndIf
+Program.Sub.txtStopRefreshTime_LostFocus.End
+
+Program.Sub.Comments.Start
+${$5$}$3.0.0.0$}$0
+${$6$}$bnguyen$}$20200212154802926$}$tqzwddZCkmoVRWHEL6DZymEEseDhOdziCzRbrpTX9LVjuB0e85y3g92ahDJvM5+NxhE1iAizxVM=
+Program.Sub.Comments.End
